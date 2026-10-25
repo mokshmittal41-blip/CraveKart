@@ -41,7 +41,7 @@ export default function Home({ onAddToCart }) {
 
   // 4. Event Handler: Copy promo coupon to clipboard (Syllabus Topics 19-24)
   const handleCopyCoupon = () => {
-    navigator.clipboard.writeText('CRAVE20');
+    navigator.clipboard.writeText('CRAVE50');
     setIsCopied(true);
     // Reset back after 2 seconds
     setTimeout(() => {
@@ -213,21 +213,21 @@ export default function Home({ onAddToCart }) {
         <div className="section-container">
           <div className="promo-banner-card">
             <div className="promo-content">
-              <span className="promo-tag">New User Offer</span>
-              <h2 className="promo-title">Get 20% OFF Your First Order!</h2>
+              <span className="promo-tag">Special Offer</span>
+              <h2 className="promo-title">Get ₹50 OFF Your Order!</h2>
               <p className="promo-text">
                 Enjoy fresh and delicious meals at budget-friendly prices. Apply the coupon code 
-                during checkout on any order above ₹399.
+                during checkout on any order above ₹199.
               </p>
               
               <div className="promo-code-box">
                 <span className="promo-code-label">Coupon Code:</span>
-                <strong className="promo-code">CRAVE20</strong>
+                <strong className="promo-code">CRAVE50</strong>
                 <button
                   type="button"
                   className="btn btn-primary-sm copy-btn"
                   onClick={handleCopyCoupon}
-                  aria-label="Copy discount code CRAVE20 to clipboard"
+                  aria-label="Copy discount code CRAVE50 to clipboard"
                 >
                   {isCopied ? '✓ Copied!' : 'Copy Code'}
                 </button>

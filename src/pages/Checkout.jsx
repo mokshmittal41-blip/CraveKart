@@ -47,21 +47,20 @@ export default function Checkout({
       return;
     }
 
-    if (cleanCode === 'CRAVE20') {
-      if (subtotal < 399) {
-        setCouponStatus({ message: 'CRAVE20 requires minimum order of ₹399.', isSuccess: false });
+    if (cleanCode === 'CRAVE50' || cleanCode === 'CRAVE20') {
+      if (subtotal < 199) {
+        setCouponStatus({ message: 'Minimum order amount must be ₹199 to apply this coupon.', isSuccess: false });
         setAppliedDiscount(0);
         return;
       }
 
-      const discount = Math.round(subtotal * 0.2);
-      setAppliedDiscount(discount);
-      setCouponStatus({ message: `CRAVE20 applied! You saved ₹${discount} (20% OFF)`, isSuccess: true });
+      setAppliedDiscount(50);
+      setCouponStatus({ message: 'Coupon applied! Flat ₹50 OFF saved.', isSuccess: true });
       if (onShowToast) {
-        onShowToast(`Coupon CRAVE20 applied! Saved ₹${discount}`, 'success');
+        onShowToast('Coupon applied! Saved ₹50', 'success');
       }
     } else {
-      setCouponStatus({ message: 'Invalid coupon code. Try CRAVE20', isSuccess: false });
+      setCouponStatus({ message: 'Invalid coupon code. Try CRAVE50', isSuccess: false });
       setAppliedDiscount(0);
     }
   };
@@ -149,7 +148,7 @@ export default function Checkout({
               </div>
               {placedOrder.discount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--veg-green)' }}>
-                  <strong>Coupon Discount (CRAVE20):</strong>
+                  <strong>Coupon Discount:</strong>
                   <strong>-₹{placedOrder.discount}</strong>
                 </div>
               )}
@@ -347,7 +346,7 @@ export default function Checkout({
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Enter code (e.g. CRAVE20)"
+                    placeholder="Enter code (e.g. CRAVE50)"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     disabled={appliedDiscount > 0}
@@ -395,7 +394,7 @@ export default function Checkout({
                 </div>
                 {appliedDiscount > 0 && (
                   <div className="summary-row" style={{ color: 'var(--veg-green)', fontWeight: '600' }}>
-                    <span>Coupon Discount (20%)</span>
+                    <span>Coupon Discount (Flat ₹50 OFF)</span>
                     <span>-₹{appliedDiscount}</span>
                   </div>
                 )}
