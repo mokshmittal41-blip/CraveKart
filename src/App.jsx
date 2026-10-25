@@ -127,19 +127,17 @@ export default function App() {
         <Route 
           path="/checkout" 
           element={
-            <ProtectedRoute user={user}>
-              <Checkout
-                cart={cart}
-                subtotal={subtotal}
-                deliveryFee={deliveryFee}
-                tax={tax}
-                grandTotal={grandTotal}
-                user={user}
-                onPlaceOrder={handlePlaceOrder}
-                onClearCart={clearCart}
-                onShowToast={showToast}
-              />
-            </ProtectedRoute>
+            <Checkout
+              cart={cart}
+              subtotal={subtotal}
+              deliveryFee={deliveryFee}
+              tax={tax}
+              grandTotal={grandTotal}
+              user={user}
+              onPlaceOrder={handlePlaceOrder}
+              onClearCart={clearCart}
+              onShowToast={showToast}
+            />
           } 
         />
 

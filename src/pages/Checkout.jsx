@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function Checkout({
   cart,
@@ -12,164 +12,112 @@ export default function Checkout({
   onClearCart,
   onShowToast,
 }) {
-  const navigate = useNavigate();
-
-  const [addressData, setAddressData] = useState({
-    fullName: user?.name || '',
-    phone: user?.phone || '9876543210',
-    street: '',
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    phone: user?.phone || '',
+    address: '',
     city: 'Mumbai',
-    state: 'Maharashtra',
     pincode: '',
-    deliveryNotes: '',
   });
 
-  const [paymentMode, setPaymentMode] = useState('cod');
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: '4532 •••• •••• 8890',
-    cardExpiry: '12/28',
-    cardCvv: '321',
-  });
-  const [upiId, setUpiId] = useState('student@okaxis');
-
-  const [formErrors, setFormErrors] = useState({});
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [errorMessage, setErrorMessage] = useState('');
   const [placedOrder, setPlacedOrder] = useState(null);
 
-  const handleAddressChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setAddressData((prev) => ({ ...prev, [name]: value }));
-    if (formErrors[name]) {
-      setFormErrors((prev) => ({ ...prev, [name]: '' }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setErrorMessage('');
   };
 
-  const validateForm = () => {
-    const errors = {};
-    if (!addressData.fullName.trim()) errors.fullName = 'Full name is required.';
-    if (!addressData.phone.trim()) errors.phone = 'Phone number is required.';
-    if (!addressData.street.trim()) errors.street = 'Street address / Flat number is required.';
-    if (!addressData.city.trim()) errors.city = 'City is required.';
-    if (!addressData.pincode.trim() || !/^\d{6}$/.test(addressData.pincode)) {
-      errors.pincode = 'Valid 6-digit PIN code is required.';
-    }
-
-    if (paymentMode === 'upi' && !upiId.includes('@')) {
-      errors.upiId = 'Please enter a valid UPI ID.';
-    }
-
-    return errors;
-  };
-
-  const handlePlaceOrder = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!cart || cart.length === 0) {
-      if (onShowToast) onShowToast('Your cart is empty!', 'warning');
-      navigate('/menu');
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim() || !formData.city.trim() || !formData.pincode.trim()) {
+      setErrorMessage('Please fill in all the required delivery fields.');
       return;
     }
 
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      if (onShowToast) onShowToast('Please fill all mandatory delivery fields.', 'error');
+    if (formData.phone.trim().length < 10) {
+      setErrorMessage('Please enter a valid 10-digit phone number.');
       return;
     }
 
-    setIsProcessing(true);
+    if (formData.pincode.trim().length !== 6) {
+      setErrorMessage('Please enter a valid 6-digit pincode.');
+      return;
+    }
 
-    setTimeout(() => {
-      const newOrder = {
-        orderId: 'CK-' + Math.floor(100000 + Math.random() * 900000),
-        placedAt: new Date().toLocaleString('en-IN', {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }),
-        userEmail: user?.email || 'guest@cravekart.com',
-        userName: addressData.fullName,
-        items: [...cart],
-        subtotal,
-        deliveryFee,
-        tax,
-        grandTotal,
-        paymentMode: paymentMode.toUpperCase(),
-        deliveryAddress: {
-          street: addressData.street,
-          city: addressData.city,
-          state: addressData.state,
-          pincode: addressData.pincode,
-          phone: addressData.phone,
-        },
-        deliveryNotes: addressData.deliveryNotes,
-        status: 'Preparing in Kitchen',
-        estimatedDelivery: '30-35 mins',
-      };
+    const newOrder = {
+      orderId: 'CK-' + Math.floor(100000 + Math.random() * 900000),
+      placedAt: new Date().toLocaleDateString('en-IN') + ' ' + new Date().toLocaleTimeString('en-IN'),
+      customerName: formData.name,
+      phone: formData.phone,
+      address: `${formData.address}, ${formData.city} - ${formData.pincode}`,
+      paymentMethod: paymentMethod,
+      items: cart ? [...cart] : [],
+      totalAmount: grandTotal,
+      status: 'Order Confirmed',
+    };
 
-      if (onPlaceOrder) {
-        onPlaceOrder(newOrder);
-      }
+    if (onPlaceOrder) {
+      onPlaceOrder(newOrder);
+    }
 
-      if (onClearCart) {
-        onClearCart();
-      }
+    if (onClearCart) {
+      onClearCart();
+    }
 
-      setIsProcessing(false);
-      setPlacedOrder(newOrder);
-      if (onShowToast) onShowToast('Order placed successfully! 🎉', 'success');
-    }, 1000);
-  };
+    if (onShowToast) {
+      onShowToast('Order placed successfully! 🎉', 'success');
+    }
 
-  const handleQuickFillAddress = () => {
-    setAddressData({
-      fullName: user?.name || 'Guest User',
-      phone: '9820198201',
-      street: 'Flat 402, Sunshine Gourmet Apartments, Orchard Lane',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001',
-      deliveryNotes: 'Please ring the bell twice and leave near doorstep.',
-    });
-    setFormErrors({});
+    setPlacedOrder(newOrder);
   };
 
   if (placedOrder) {
     return (
-      <main className="order-success-page">
+      <main className="checkout-page">
         <div className="section-container">
-          <div className="order-success-card">
-            <div className="success-icon-animation">🎉</div>
-            <span className="success-badge">Order Confirmed!</span>
-            <h1 className="success-title">Thank You For Your Order!</h1>
-            <p className="success-subtitle">
-              Your order <strong className="order-id-highlight">#{placedOrder.orderId}</strong> has been received by our kitchen and is now being prepared fresh.
+          <div className="checkout-card text-center" style={{ maxWidth: '650px', margin: '3rem auto', padding: '2.5rem' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🎉</div>
+            <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: 'var(--text-dark)' }}>Order Confirmed!</h1>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              Thank you for ordering with CraveKart. Your delicious food is being prepared!
             </p>
 
-            <div className="order-quick-summary">
-              <div className="summary-item">
-                <span>Estimated Time:</span>
-                <strong>⏱️ {placedOrder.estimatedDelivery}</strong>
+            <div style={{ backgroundColor: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)', padding: '1.25rem', textAlign: 'left', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <strong>Order ID:</strong>
+                <span style={{ color: 'var(--primary)', fontWeight: '700' }}>{placedOrder.orderId}</span>
               </div>
-              <div className="summary-item">
-                <span>Total Paid / Payable:</span>
-                <strong>₹{placedOrder.grandTotal}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <strong>Delivering to:</strong>
+                <span>{placedOrder.customerName} ({placedOrder.phone})</span>
               </div>
-              <div className="summary-item">
-                <span>Payment Mode:</span>
-                <strong>{placedOrder.paymentMode}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <strong>Address:</strong>
+                <span>{placedOrder.address}</span>
               </div>
-              <div className="summary-item">
-                <span>Delivering To:</span>
-                <strong>{placedOrder.deliveryAddress.street}, {placedOrder.deliveryAddress.city}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <strong>Payment Mode:</strong>
+                <span>{placedOrder.paymentMethod}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)', marginTop: '0.5rem' }}>
+                <strong>Total Paid:</strong>
+                <strong style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>₹{placedOrder.totalAmount}</strong>
               </div>
             </div>
 
-            <div className="success-actions">
-              <Link to="/orders" className="btn btn-primary btn-lg">
-                Track in Order History ➔
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/orders" className="btn btn-primary">
+                View My Orders
               </Link>
-              <Link to="/menu" className="btn btn-secondary btn-lg">
-                Order More Food
+              <Link to="/" className="btn btn-secondary">
+                Back to Home
               </Link>
             </div>
           </div>
@@ -180,12 +128,15 @@ export default function Checkout({
 
   if (!cart || cart.length === 0) {
     return (
-      <main className="checkout-empty-page">
-        <div className="section-container text-center">
+      <main className="checkout-page">
+        <div className="section-container text-center" style={{ padding: '4rem 1rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🛒</div>
           <h2>Your Cart is Empty</h2>
-          <p>You cannot proceed to checkout with an empty cart.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            Please add some delicious food to your cart before proceeding to checkout.
+          </p>
           <Link to="/menu" className="btn btn-primary">
-            Browse Menu
+            Explore Menu Now
           </Link>
         </div>
       </main>
@@ -194,296 +145,182 @@ export default function Checkout({
 
   return (
     <main className="checkout-page">
-      <section className="checkout-header">
-        <div className="section-container">
-          <h1 className="page-title">Finalize Your Order</h1>
-          <p className="page-subtitle">Provide delivery details and choose your preferred payment method.</p>
+      <div className="section-container">
+        <div className="checkout-header" style={{ padding: '2.5rem 0 1.5rem 0' }}>
+          <h1 className="page-title">Checkout</h1>
+          <p className="page-subtitle">Enter your delivery address and choose your payment method.</p>
         </div>
-      </section>
 
-      <section className="checkout-content">
-        <div className="section-container">
-          <div className="checkout-grid">
-            <div className="checkout-forms-column">
-              <div className="checkout-card">
-                <div className="card-header-flex">
-                  <h2 className="card-heading">📍 1. Delivery Address</h2>
-                  <button
-                    type="button"
-                    className="btn-demo-autofill"
-                    onClick={handleQuickFillAddress}
-                  >
-                    Quick Fill Address
-                  </button>
+        {errorMessage && (
+          <div style={{ backgroundColor: 'var(--non-veg-bg)', color: 'var(--non-veg-red)', padding: '0.75rem 1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid #fecaca' }}>
+            ⚠️ {errorMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="checkout-grid">
+          <div className="checkout-left">
+            <div className="checkout-card">
+              <h2 className="card-heading" style={{ marginBottom: '1.25rem' }}>1. Delivery Address</h2>
+
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="name">Full Name *</label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    className="form-input"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="e.g. Rahul Sharma"
+                  />
                 </div>
 
-                <form id="checkout-form" onSubmit={handlePlaceOrder} noValidate>
-                  <div className="form-grid-2">
-                    <div className="form-group">
-                      <label htmlFor="addr-name" className="form-label">Recipient Full Name *</label>
-                      <input
-                        id="addr-name"
-                        type="text"
-                        name="fullName"
-                        className={`form-input ${formErrors.fullName ? 'input-error' : ''}`}
-                        value={addressData.fullName}
-                        onChange={handleAddressChange}
-                        required
-                      />
-                      {formErrors.fullName && <span className="error-message">{formErrors.fullName}</span>}
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="addr-phone" className="form-label">Phone Number *</label>
-                      <input
-                        id="addr-phone"
-                        type="tel"
-                        name="phone"
-                        className={`form-input ${formErrors.phone ? 'input-error' : ''}`}
-                        value={addressData.phone}
-                        onChange={handleAddressChange}
-                        required
-                      />
-                      {formErrors.phone && <span className="error-message">{formErrors.phone}</span>}
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="addr-street" className="form-label">Street Address / House / Flat No. *</label>
-                    <input
-                      id="addr-street"
-                      type="text"
-                      name="street"
-                      placeholder="e.g. Flat 302, Green Valley Towers, Main Rd"
-                      className={`form-input ${formErrors.street ? 'input-error' : ''}`}
-                      value={addressData.street}
-                      onChange={handleAddressChange}
-                      required
-                    />
-                    {formErrors.street && <span className="error-message">{formErrors.street}</span>}
-                  </div>
-
-                  <div className="form-grid-3">
-                    <div className="form-group">
-                      <label htmlFor="addr-city" className="form-label">City *</label>
-                      <input
-                        id="addr-city"
-                        type="text"
-                        name="city"
-                        className={`form-input ${formErrors.city ? 'input-error' : ''}`}
-                        value={addressData.city}
-                        onChange={handleAddressChange}
-                        required
-                      />
-                      {formErrors.city && <span className="error-message">{formErrors.city}</span>}
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="addr-state" className="form-label">State</label>
-                      <input
-                        id="addr-state"
-                        type="text"
-                        name="state"
-                        className="form-input"
-                        value={addressData.state}
-                        onChange={handleAddressChange}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="addr-pin" className="form-label">PIN Code *</label>
-                      <input
-                        id="addr-pin"
-                        type="text"
-                        name="pincode"
-                        placeholder="6 digits"
-                        className={`form-input ${formErrors.pincode ? 'input-error' : ''}`}
-                        value={addressData.pincode}
-                        onChange={handleAddressChange}
-                        maxLength={6}
-                        required
-                      />
-                      {formErrors.pincode && <span className="error-message">{formErrors.pincode}</span>}
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="addr-notes" className="form-label">Delivery Instructions (Optional)</label>
-                    <textarea
-                      id="addr-notes"
-                      name="deliveryNotes"
-                      rows={2}
-                      placeholder="e.g. Leave with security guard, don't ring bell"
-                      className="form-textarea"
-                      value={addressData.deliveryNotes}
-                      onChange={handleAddressChange}
-                    />
-                  </div>
-                </form>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="phone">Phone Number *</label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    className="form-input"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="10-digit mobile number"
+                  />
+                </div>
               </div>
 
-              <div className="checkout-card">
-                <h2 className="card-heading">💳 2. Payment Method</h2>
-                
-                <div className="payment-options-list">
-                  <label className={`payment-option ${paymentMode === 'cod' ? 'option-selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="cod"
-                      checked={paymentMode === 'cod'}
-                      onChange={(e) => setPaymentMode(e.target.value)}
-                    />
-                    <div className="option-info">
-                      <div className="option-title-row">
-                        <span className="option-icon">💵</span>
-                        <strong>Cash / Pay on Delivery</strong>
-                      </div>
-                      <p className="option-desc">Pay via cash or UPI to the delivery rider when food arrives.</p>
-                    </div>
-                  </label>
+              <div className="form-group">
+                <label className="form-label" htmlFor="address">Street Address / Hostel / Flat *</label>
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  className="form-input"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="e.g. Room 204, Boys Hostel 3 or Flat 4B, Green Avenue"
+                />
+              </div>
 
-                  <label className={`payment-option ${paymentMode === 'upi' ? 'option-selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="upi"
-                      checked={paymentMode === 'upi'}
-                      onChange={(e) => setPaymentMode(e.target.value)}
-                    />
-                    <div className="option-info">
-                      <div className="option-title-row">
-                        <span className="option-icon">📱</span>
-                        <strong>UPI (Google Pay, PhonePe, Paytm)</strong>
-                      </div>
-                      <p className="option-desc">Instant payment via your preferred UPI application.</p>
-                    </div>
-                  </label>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="city">City *</label>
+                  <input
+                    id="city"
+                    name="city"
+                    type="text"
+                    className="form-input"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="City"
+                  />
+                </div>
 
-                  {paymentMode === 'upi' && (
-                    <div className="payment-extra-inputs">
-                      <label htmlFor="upi-id" className="form-label">Your UPI ID</label>
-                      <input
-                        id="upi-id"
-                        type="text"
-                        className="form-input"
-                        placeholder="e.g. user@okhdfcbank"
-                        value={upiId}
-                        onChange={(e) => setUpiId(e.target.value)}
-                      />
-                    </div>
-                  )}
-
-                  <label className={`payment-option ${paymentMode === 'card' ? 'option-selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="card"
-                      checked={paymentMode === 'card'}
-                      onChange={(e) => setPaymentMode(e.target.value)}
-                    />
-                    <div className="option-info">
-                      <div className="option-title-row">
-                        <span className="option-icon">💳</span>
-                        <strong>Credit / Debit Card</strong>
-                      </div>
-                      <p className="option-desc">Visa, Mastercard, RuPay & Amex accepted.</p>
-                    </div>
-                  </label>
-
-                  {paymentMode === 'card' && (
-                    <div className="payment-extra-inputs card-inputs-grid">
-                      <div className="form-group">
-                        <label className="form-label">Card Number</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={cardDetails.cardNumber}
-                          onChange={(e) => setCardDetails({ ...cardDetails, cardNumber: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-grid-2">
-                        <div className="form-group">
-                          <label className="form-label">Expiry (MM/YY)</label>
-                          <input
-                            type="text"
-                            className="form-input"
-                            value={cardDetails.cardExpiry}
-                            onChange={(e) => setCardDetails({ ...cardDetails, cardExpiry: e.target.value })}
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label">CVV</label>
-                          <input
-                            type="password"
-                            maxLength={3}
-                            className="form-input"
-                            value={cardDetails.cardCvv}
-                            onChange={(e) => setCardDetails({ ...cardDetails, cardCvv: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                <div className="form-group">
+                  <label className="form-label" htmlFor="pincode">Pincode *</label>
+                  <input
+                    id="pincode"
+                    name="pincode"
+                    type="text"
+                    className="form-input"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    placeholder="6-digit pincode"
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="checkout-summary-column">
-              <aside className="checkout-review-card">
-                <h3 className="review-title">Items in Order ({cart.length})</h3>
-                
-                <div className="review-items-list">
-                  {cart.map((item) => (
-                    <div key={item.id} className="review-item-row">
-                      <div className="review-item-main">
-                        <span className="review-item-qty">{item.quantity}x</span>
-                        <span className="review-item-name">{item.name}</span>
-                      </div>
-                      <span className="review-item-price">₹{item.price * item.quantity}</span>
-                    </div>
-                  ))}
-                </div>
+            <div className="checkout-card">
+              <h2 className="card-heading" style={{ marginBottom: '1.25rem' }}>2. Payment Method</h2>
 
-                <div className="summary-divider"></div>
+              <div className="payment-options-list">
+                <label className={`payment-option ${paymentMethod === 'Cash on Delivery' ? 'option-selected' : ''}`} style={{ cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="Cash on Delivery"
+                    checked={paymentMethod === 'Cash on Delivery'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  />
+                  <div>
+                    <strong>💵 Cash on Delivery (COD)</strong>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Pay with cash or UPI when your food arrives.</p>
+                  </div>
+                </label>
 
-                <div className="summary-breakdown">
-                  <div className="summary-row">
-                    <span>Subtotal</span>
-                    <span>₹{subtotal}</span>
+                <label className={`payment-option ${paymentMethod === 'UPI / GPay / PhonePe' ? 'option-selected' : ''}`} style={{ cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="UPI / GPay / PhonePe"
+                    checked={paymentMethod === 'UPI / GPay / PhonePe'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  />
+                  <div>
+                    <strong>📱 UPI (Google Pay, PhonePe, Paytm)</strong>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Instant online payment via UPI app.</p>
                   </div>
-                  <div className="summary-row">
-                    <span>GST (5%)</span>
-                    <span>₹{tax}</span>
-                  </div>
-                  <div className="summary-row">
-                    <span>Delivery</span>
-                    <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
-                  </div>
-                  <div className="summary-divider"></div>
-                  <div className="summary-row grand-total-row">
-                    <strong>Total Payable</strong>
-                    <strong className="grand-total-price">₹{grandTotal}</strong>
-                  </div>
-                </div>
+                </label>
 
-                <button
-                  type="submit"
-                  form="checkout-form"
-                  className="btn btn-primary btn-block btn-place-order"
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Processing Order...' : `Place Order • ₹${grandTotal}`}
-                </button>
-
-                <p className="order-terms-note">
-                  By placing order, you agree to CraveKart's hygiene and delivery guidelines.
-                </p>
-              </aside>
+                <label className={`payment-option ${paymentMethod === 'Credit / Debit Card' ? 'option-selected' : ''}`} style={{ cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="Credit / Debit Card"
+                    checked={paymentMethod === 'Credit / Debit Card'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  />
+                  <div>
+                    <strong>💳 Credit or Debit Card</strong>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Visa, Mastercard, RuPay cards accepted.</p>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+
+          <div className="checkout-right">
+            <div className="order-summary-card">
+              <h2 className="summary-title">Order Summary</h2>
+
+              <div style={{ marginBottom: '1rem', maxHeight: '180px', overflowY: 'auto' }}>
+                {cart.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', fontSize: '0.9rem' }}>
+                    <span>{item.name} × {item.quantity}</span>
+                    <strong>₹{item.price * item.quantity}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div className="summary-breakdown">
+                <div className="summary-row">
+                  <span>Subtotal</span>
+                  <span>₹{subtotal}</span>
+                </div>
+                <div className="summary-row">
+                  <span>Delivery Partner Fee</span>
+                  <span>{deliveryFee === 0 ? <strong className="text-free-delivery">FREE</strong> : `₹${deliveryFee}`}</span>
+                </div>
+                <div className="summary-row">
+                  <span>Taxes (GST 5%)</span>
+                  <span>₹{tax}</span>
+                </div>
+                <div className="summary-divider"></div>
+                <div className="summary-row grand-total-row">
+                  <strong>Total Amount</strong>
+                  <strong className="grand-total-price">₹{grandTotal}</strong>
+                </div>
+              </div>
+
+              <button type="submit" className="btn btn-primary btn-block btn-place-order">
+                Place Order (₹{grandTotal}) ➔
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </main>
   );
 }

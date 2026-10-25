@@ -124,14 +124,12 @@ export default function Cart({
                   </div>
                 </div>
 
-                <button
-                  type="button"
+                <Link
+                  to="/checkout"
                   className="btn btn-primary btn-block btn-checkout"
-                  disabled
-                  title="Proceed to Checkout (Display only for Evaluation 1)"
                 >
                   Proceed to Checkout ➔
-                </button>
+                </Link>
 
                 <div className="security-badge-row">
                   <span>🔒 Safe & Secure Checkout</span>
