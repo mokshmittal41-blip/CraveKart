@@ -21,8 +21,13 @@ export default function Checkout({
   });
 
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [couponStatus, setCouponStatus] = useState({ message: '', isSuccess: false });
   const [errorMessage, setErrorMessage] = useState('');
   const [placedOrder, setPlacedOrder] = useState(null);
+
+  const finalTotal = Math.max(0, grandTotal - appliedDiscount);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +36,40 @@ export default function Checkout({
       [name]: value,
     }));
     setErrorMessage('');
+  };
+
+  const handleApplyCoupon = (e) => {
+    e.preventDefault();
+    const cleanCode = couponCode.trim().toUpperCase();
+
+    if (!cleanCode) {
+      setCouponStatus({ message: 'Please enter a coupon code.', isSuccess: false });
+      return;
+    }
+
+    if (cleanCode === 'CRAVE20') {
+      if (subtotal < 399) {
+        setCouponStatus({ message: 'CRAVE20 requires minimum order of ₹399.', isSuccess: false });
+        setAppliedDiscount(0);
+        return;
+      }
+
+      const discount = Math.round(subtotal * 0.2);
+      setAppliedDiscount(discount);
+      setCouponStatus({ message: `CRAVE20 applied! You saved ₹${discount} (20% OFF)`, isSuccess: true });
+      if (onShowToast) {
+        onShowToast(`Coupon CRAVE20 applied! Saved ₹${discount}`, 'success');
+      }
+    } else {
+      setCouponStatus({ message: 'Invalid coupon code. Try CRAVE20', isSuccess: false });
+      setAppliedDiscount(0);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode('');
+    setAppliedDiscount(0);
+    setCouponStatus({ message: '', isSuccess: false });
   };
 
   const handleSubmit = (e) => {
@@ -59,7 +98,9 @@ export default function Checkout({
       address: `${formData.address}, ${formData.city} - ${formData.pincode}`,
       paymentMethod: paymentMethod,
       items: cart ? [...cart] : [],
-      totalAmount: grandTotal,
+      subtotal: subtotal,
+      discount: appliedDiscount,
+      totalAmount: finalTotal,
       status: 'Order Confirmed',
     };
 
@@ -106,6 +147,12 @@ export default function Checkout({
                 <strong>Payment Mode:</strong>
                 <span>{placedOrder.paymentMethod}</span>
               </div>
+              {placedOrder.discount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--veg-green)' }}>
+                  <strong>Coupon Discount (CRAVE20):</strong>
+                  <strong>-₹{placedOrder.discount}</strong>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)', marginTop: '0.5rem' }}>
                 <strong>Total Paid:</strong>
                 <strong style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>₹{placedOrder.totalAmount}</strong>
@@ -294,6 +341,45 @@ export default function Checkout({
                 ))}
               </div>
 
+              <div style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+                <label className="form-label" style={{ fontSize: '0.85rem' }}>Apply Coupon Code</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter code (e.g. CRAVE20)"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    disabled={appliedDiscount > 0}
+                    style={{ textTransform: 'uppercase', fontSize: '0.9rem', padding: '0.5rem 0.75rem' }}
+                  />
+                  {appliedDiscount > 0 ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={handleRemoveCoupon}
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleApplyCoupon}
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                    >
+                      Apply
+                    </button>
+                  )}
+                </div>
+                {couponStatus.message && (
+                  <div style={{ fontSize: '0.82rem', marginTop: '0.4rem', fontWeight: '600', color: couponStatus.isSuccess ? 'var(--veg-green)' : 'var(--error)' }}>
+                    {couponStatus.message}
+                  </div>
+                )}
+              </div>
+
               <div className="summary-breakdown">
                 <div className="summary-row">
                   <span>Subtotal</span>
@@ -307,15 +393,21 @@ export default function Checkout({
                   <span>Taxes (GST 5%)</span>
                   <span>₹{tax}</span>
                 </div>
+                {appliedDiscount > 0 && (
+                  <div className="summary-row" style={{ color: 'var(--veg-green)', fontWeight: '600' }}>
+                    <span>Coupon Discount (20%)</span>
+                    <span>-₹{appliedDiscount}</span>
+                  </div>
+                )}
                 <div className="summary-divider"></div>
                 <div className="summary-row grand-total-row">
                   <strong>Total Amount</strong>
-                  <strong className="grand-total-price">₹{grandTotal}</strong>
+                  <strong className="grand-total-price">₹{finalTotal}</strong>
                 </div>
               </div>
 
               <button type="submit" className="btn btn-primary btn-block btn-place-order">
-                Place Order (₹{grandTotal}) ➔
+                Place Order (₹{finalTotal}) ➔
               </button>
             </div>
           </div>
