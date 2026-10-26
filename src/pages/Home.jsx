@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import DishCard from '../components/DishCard';
 import menuData from '../data/menu.json';
 
@@ -15,7 +15,8 @@ import menuData from '../data/menu.json';
  * - Passing props to reusable components (DishCard) (Topics 25-30)
  * - React Router navigation (<Link>) (Topics 37-42)
  */
-export default function Home({ onAddToCart }) {
+export default function Home({ onAddToCart, onOpenSurprise }) {
+  const navigate = useNavigate();
   // 1. React State: Category filter tab (Syllabus Topics 31-36)
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -73,6 +74,13 @@ export default function Home({ onAddToCart }) {
               <Link to="/menu" className="btn btn-primary btn-lg">
                 Explore Full Menu →
               </Link>
+              <button
+                type="button"
+                onClick={onOpenSurprise}
+                className="btn btn-surprise btn-lg"
+              >
+                Surprise Me 🎲
+              </button>
               <Link to="/about" className="btn btn-secondary btn-lg">
                 About Our Kitchen
               </Link>

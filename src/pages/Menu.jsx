@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import DishCard from '../components/DishCard';
 import menuData from '../data/menu.json';
 
-export default function Menu({ onAddToCart }) {
+export default function Menu({ onAddToCart, onOpenSurprise }) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
 
@@ -155,6 +156,14 @@ export default function Menu({ onAddToCart }) {
                   <option value="highest-rated">Highest Rated ★</option>
                 </select>
               </div>
+
+              <button 
+                type="button" 
+                className="btn-surprise-menu"
+                onClick={onOpenSurprise}
+              >
+                🎲 Surprise Me
+              </button>
 
               <button 
                 type="button" 

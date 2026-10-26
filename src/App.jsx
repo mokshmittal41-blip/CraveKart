@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useCart } from './hooks/useCart';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import Toast from './components/Toast';
+import SurpriseModal from './components/SurpriseModal';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
 import DishDetail from './pages/DishDetail';
@@ -23,6 +24,24 @@ import './App.css';
 export default function App() {
   const [user, setUser] = useLocalStorage('cravekart_user', null);
   const [orders, setOrders] = useLocalStorage('cravekart_orders', []);
+  const [theme, setTheme] = useLocalStorage('cravekart_theme', 'light');
+  const [isSurpriseOpen, setIsSurpriseOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+  }, [setTheme]);
+
+  const handleOpenSurprise = useCallback(() => {
+    setIsSurpriseOpen(true);
+  }, []);
+
+  const handleCloseSurprise = useCallback(() => {
+    setIsSurpriseOpen(false);
+  }, []);
 
   const {
     cart,
@@ -73,17 +92,30 @@ export default function App() {
         totalItems={totalItems} 
         user={user} 
         onLogout={handleLogout} 
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        onOpenSurprise={handleOpenSurprise}
       />
 
       <Routes>
         <Route 
           path="/" 
-          element={<Home onAddToCart={handleAddToCartWithToast} />} 
+          element={
+            <Home 
+              onAddToCart={handleAddToCartWithToast} 
+              onOpenSurprise={handleOpenSurprise} 
+            />
+          } 
         />
         
         <Route 
           path="/menu" 
-          element={<Menu onAddToCart={handleAddToCartWithToast} />} 
+          element={
+            <Menu 
+              onAddToCart={handleAddToCartWithToast} 
+              onOpenSurprise={handleOpenSurprise} 
+            />
+          } 
         />
         
         <Route 
@@ -154,6 +186,11 @@ export default function App() {
       </Routes>
 
       <Footer />
+      <SurpriseModal
+        isOpen={isSurpriseOpen}
+        onClose={handleCloseSurprise}
+        onAddToCart={handleAddToCartWithToast}
+      />
       <Toast 
         message={toast.message} 
         type={toast.type} 

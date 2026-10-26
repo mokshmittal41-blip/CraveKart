@@ -56,6 +56,26 @@
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme='dark'] {
+  --bg-page: #0f1115;
+  --bg-card: #171a21;
+  --bg-subtle: #20242e;
+  --bg-subtle-hover: #2a303d;
+  --text-dark: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-light: #6b7280;
+  --border-color: #2b313e;
+  --border-light: #212530;
+  --primary-light: #2c1618;
+  --primary-border: #4d1c21;
+  --secondary-light: #2e230e;
+  --veg-bg: #0e2918;
+  --non-veg-bg: #301314;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.6);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -201,7 +221,7 @@ button, input, select, textarea {
 }
 
 .btn-secondary {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   color: var(--text-dark);
   border-color: var(--border-color);
   box-shadow: var(--shadow-sm);
@@ -287,7 +307,7 @@ button, input, select, textarea {
   padding: 0.75rem 1rem;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius-md);
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   color: var(--text-dark);
   font-size: 0.95rem;
   transition: var(--transition);

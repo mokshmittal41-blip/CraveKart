@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 
-export default function Navbar({ totalItems, user, onLogout }) {
+export default function Navbar({ totalItems, user, onLogout, theme, onToggleTheme, onOpenSurprise }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -19,6 +19,13 @@ export default function Navbar({ totalItems, user, onLogout }) {
     navigate('/');
   };
 
+  const handleSurpriseMe = () => {
+    closeMobileMenu();
+    if (onOpenSurprise) {
+      onOpenSurprise();
+    }
+  };
+
   return (
     <header className="site-header">
       <div className="header-container">
@@ -27,17 +34,27 @@ export default function Navbar({ totalItems, user, onLogout }) {
           <span className="logo-text">Crave<span className="logo-highlight">Kart</span></span>
         </Link>
 
-        <button
-          type="button"
-          className="mobile-nav-toggle"
-          onClick={toggleMobileMenu}
-          aria-expanded={isMobileMenuOpen}
-          aria-label="Toggle navigation menu"
-        >
-          <span className="hamburger-bar"></span>
-          <span className="hamburger-bar"></span>
-          <span className="hamburger-bar"></span>
-        </button>
+        <div className="header-quick-tools">
+          <button
+            type="button"
+            className="theme-toggle-btn mobile-theme-btn"
+            onClick={onToggleTheme}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <button
+            type="button"
+            className="mobile-nav-toggle"
+            onClick={toggleMobileMenu}
+            aria-expanded={isMobileMenuOpen}
+            aria-label="Toggle navigation menu"
+          >
+            <span className="hamburger-bar"></span>
+            <span className="hamburger-bar"></span>
+            <span className="hamburger-bar"></span>
+          </button>
+        </div>
 
         <nav className={`main-nav ${isMobileMenuOpen ? 'nav-open' : ''}`} aria-label="Main Navigation">
           <ul className="nav-list">
@@ -92,6 +109,23 @@ export default function Navbar({ totalItems, user, onLogout }) {
           </ul>
 
           <div className="nav-actions">
+            <button
+              type="button"
+              className="btn-surprise-nav"
+              onClick={handleSurpriseMe}
+            >
+              🎲 Surprise Me
+            </button>
+
+            <button
+              type="button"
+              className="theme-toggle-btn desktop-theme-btn"
+              onClick={onToggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+
             <Link 
               to="/cart" 
               className="cart-btn" 
